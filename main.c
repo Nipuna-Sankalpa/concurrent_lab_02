@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <time.h>
 
-static float const memberFunction_count=10;
-static float const insertFunction_count=10;
-static float const deleteFunction_count=10;
+static float const memberFunction_count=9900;
+static float const insertFunction_count=50;
+static float const deleteFunction_count=50;
 
 struct node
 {
@@ -21,7 +21,7 @@ int deleteFunctionCount;
 int totalOps;
 
 pthread_mutex_t mutexList=PTHREAD_MUTEX_INITIALIZER,mutexTotalOps=PTHREAD_MUTEX_INITIALIZER;
-pthread_rwlockattr_t * rwlock;
+pthread_rwlockattr_t rwlock;
 
 int member_ratio=990;
 int insert_ratio=5;
@@ -40,7 +40,7 @@ int main()
     pthread_mutex_init(&mutexList,NULL);
     //pthread_mutex_init(&totalThreadCount,NULL);
 
-
+clock_t start_time=clock(),end_time;
     memberFunctionCount=memberFunction_count;
     insertFunctionCount=insertFunction_count;
     deleteFunctionCount=deleteFunction_count;
@@ -48,7 +48,7 @@ int main()
 
     //pthread_rwlockattr_init(&rwlock);
 
-    int i=0,numberOfThreads=2;
+    int i=0,numberOfThreads=4;
 
     init();
 
@@ -66,6 +66,9 @@ int main()
     {
         pthread_join(thread[i],NULL);
     }
+
+    end_time=clock();
+    printf("Thread_id : %d -> Time : %f\n",(double)(end_time-start_time)/CLOCKS_PER_SEC);
 
     free(thread);
     return 0;
@@ -169,11 +172,11 @@ struct node *member(int val)
 
 void * executeThreads(void *rank)
 {
-    clock_t start_time=clock(),end_time;
     float mem_limit=member_ratio,insert_limit=member_ratio+insert_ratio,del_limit=insert_limit+delete_ratio;
     srand(time(NULL));
     while(totalOps > 0)
     {
+    printf("Ops = %d",totalOps);
         pthread_mutex_lock(&mutexTotalOps);
         totalOps--;
         pthread_mutex_unlock(&mutexTotalOps);
@@ -258,7 +261,5 @@ void * executeThreads(void *rank)
         }
 
     }
-    end_time=clock();
-    printf("Thread_id : %d -> Time : %f\n",(int)rank,(double)(end_time-start_time)/CLOCKS_PER_SEC);
     return NULL;
 }
