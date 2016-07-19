@@ -43,9 +43,6 @@ int main()
     pthread_mutex_init(&mutexTotalOps,NULL);
     pthread_rwlock_init(&rwlock,NULL);
 
-
-    GET_TIME(start);
-
     memberFunctionCount=memberFunction_count;
     insertFunctionCount=insertFunction_count;
     deleteFunctionCount=deleteFunction_count;
@@ -54,7 +51,7 @@ int main()
     int i=0,numberOfThreads=4;
 
     init();
-
+    GET_TIME(start);
 
     thread=malloc(numberOfThreads * sizeof(pthread_t));
 
