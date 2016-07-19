@@ -5,10 +5,12 @@
 #include <time.h>
 #include "timer.h"
 
+/** define number of member, insert and delete operations **/
 static float const memberFunction_count=9900;
 static float const insertFunction_count=50;
 static float const deleteFunction_count=50;
 
+/** node structure **/
 struct node
 {
     int value;
@@ -39,6 +41,8 @@ int main()
 {
     double start, finish;
     pthread_t * thread;
+
+    /** initialize mutex and read write lock **/
     //pthread_mutex_init(&mutexList,NULL);
     pthread_mutex_init(&mutexTotalOps,NULL);
     pthread_rwlock_init(&rwlock,NULL);
@@ -48,13 +52,15 @@ int main()
     deleteFunctionCount=deleteFunction_count;
     totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
 
-    int i=0,numberOfThreads=4;
+    int i=0;                // thread ID
+    int numberOfThreads=4;  // number of threads
 
     init();
-    GET_TIME(start);
+    GET_TIME(start);        // start timer
 
     thread=malloc(numberOfThreads * sizeof(pthread_t));
 
+    /** create threads **/
     for(i=0; i<numberOfThreads; i++)
     {
         pthread_create(&thread[i],NULL,executeThreads,(void *) i);
@@ -62,12 +68,13 @@ int main()
 
     printf("threads created\n");
 
+    /** wait main thread until other threads are finished **/
     for(i=0; i<numberOfThreads; i++)
     {
         pthread_join(thread[i],NULL);
     }
 
-    GET_TIME(finish);
+    GET_TIME(finish);       // stop timer
     printf("Time Taken to Complete Task: %f\n",finish - start);
 
 
@@ -75,6 +82,7 @@ int main()
     return 0;
 }
 
+/** create a linklist with 1000 elements and return head **/
 struct node * init()
 {
     int i=0;
@@ -92,6 +100,7 @@ struct node * init()
     return head;
 }
 
+/** insert a node to the linklist **/
 bool insert_node(int val,int thread_id)
 {
     if(insertFunctionCount <= 0)
@@ -109,6 +118,7 @@ bool insert_node(int val,int thread_id)
     return true;
 }
 
+/** delete a node by value, return true if success otherwise false **/
 bool delete_node(int val,int thread_id)
 {
     if(deleteFunctionCount <= 0)
@@ -149,6 +159,7 @@ bool delete_node(int val,int thread_id)
 
 }
 
+/** search a node by value, return node if exist otherwise NULL **/
 struct node *member(int val,int thread_id)
 {
 
@@ -177,12 +188,15 @@ struct node *member(int val,int thread_id)
     return NULL;
 }
 
+/** thread function **/
 void * executeThreads(void *rank)
 {
+    /** define three ranges for member, delete and insert operations according to the given ratio **/
     float mem_limit=member_ratio,insert_limit=member_ratio+insert_ratio,del_limit=insert_limit+delete_ratio;
     srand(time(NULL));
     while(totalOps > 0)
     {
+        /** mutex for totalOps global variable**/
         pthread_mutex_lock(&mutexTotalOps);
         totalOps--;
         pthread_mutex_unlock(&mutexTotalOps);
@@ -192,8 +206,9 @@ void * executeThreads(void *rank)
             break;
         }
 
-        int rndVal=rand()%1000+1;
+        int rndVal=rand()%1000+1;   // generate random value from 1 to 1000
 
+        /** adjust pre defined ranges by considering function count **/
         if(memberFunctionCount == 0)
         {
             mem_limit=0;
@@ -247,6 +262,7 @@ void * executeThreads(void *rank)
             }
         }
 
+        /** execute relevant operation according to the memory limit **/
         if(rndVal <= mem_limit)
         {
             pthread_rwlock_rdlock(&rwlock);
@@ -274,3 +290,12 @@ void * executeThreads(void *rank)
     }
     return NULL;
 }
+
+
+/* questions
+
+seed is not defined
+use of 1-2^16
+ranges of insert delete and member function
+
+*/
