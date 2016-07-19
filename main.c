@@ -20,7 +20,7 @@ int insertFunctionCount;
 int deleteFunctionCount;
 int totalOps;
 
-pthread_mutex_t mutexList=PTHREAD_MUTEX_INITIALIZER,mutexTotalOps=PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutexList,mutexTotalOps;
 pthread_rwlockattr_t rwlock;
 
 int member_ratio=990;
@@ -37,16 +37,15 @@ void * executeThreads(void * rank);
 int main()
 {
     pthread_t * thread;
-    pthread_mutex_init(&mutexList,NULL);
+    //pthread_mutex_init(&mutexList,NULL);
     pthread_mutex_init(&mutexTotalOps,NULL);
+    pthread_rwlock_init(&rwlock,NULL);
 
     clock_t start_time=clock(),end_time;
     memberFunctionCount=memberFunction_count;
     insertFunctionCount=insertFunction_count;
     deleteFunctionCount=deleteFunction_count;
     totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
-
-    //pthread_rwlockattr_init(&rwlock);
 
     int i=0,numberOfThreads=4;
 
@@ -248,21 +247,27 @@ void * executeThreads(void *rank)
 
         if(rndVal <= mem_limit)
         {
-            pthread_mutex_lock(&mutexList);
+            pthread_rwlock_rdlock(&rwlock);
+            //pthread_mutex_lock(&mutexList);
             member(rand()%1500+1,(int)rank);
-            pthread_mutex_unlock(&mutexList);
+            //pthread_mutex_unlock(&mutexList);
+            pthread_rwlock_unlock(&rwlock);
         }
         else if(rndVal <= insert_limit)
         {
-            pthread_mutex_lock(&mutexList);
+            //pthread_mutex_lock(&mutexList);
+            pthread_rwlock_wrlock(&rwlock);
             insert_node(rand()%1000+1001,(int)rank);
-            pthread_mutex_unlock(&mutexList);
+            //pthread_mutex_unlock(&mutexList);
+            pthread_rwlock_unlock(&rwlock);
         }
         else if(rndVal <= del_limit)
         {
-            pthread_mutex_lock(&mutexList);
+            pthread_rwlock_wrlock(&rwlock);
+            //pthread_mutex_lock(&mutexList);
             delete_node(rand()%1500+1,(int)rank);
-            pthread_mutex_unlock(&mutexList);
+            //pthread_mutex_unlock(&mutexList);
+            pthread_rwlock_unlock(&rwlock);
         }
     }
     return NULL;
