@@ -20,7 +20,7 @@ int insertFunctionCount;
 int deleteFunctionCount;
 int totalOps;
 
-pthread_mutex_t * mutexList;
+pthread_mutex_t mutexList=PTHREAD_MUTEX_INITIALIZER,mutexTotalOps=PTHREAD_MUTEX_INITIALIZER;
 pthread_rwlockattr_t * rwlock;
 
 int member_ratio=990;
@@ -41,10 +41,10 @@ int main()
     //pthread_mutex_init(&totalThreadCount,NULL);
 
 
-memberFunctionCount=memberFunction_count;
-insertFunctionCount=insertFunction_count;
-deleteFunctionCount=deleteFunction_count;
-totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
+    memberFunctionCount=memberFunction_count;
+    insertFunctionCount=insertFunction_count;
+    deleteFunctionCount=deleteFunction_count;
+    totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
 
     //pthread_rwlockattr_init(&rwlock);
 
@@ -174,9 +174,9 @@ void * executeThreads(void *rank)
     srand(time(NULL));
     while(totalOps > 0)
     {
-        pthread_mutex_lock(&mutexList);
+        pthread_mutex_lock(&mutexTotalOps);
         totalOps--;
-        pthread_mutex_unlock(&mutexList);
+        pthread_mutex_unlock(&mutexTotalOps);
 
         if (insertFunctionCount == 0 && memberFunctionCount == 0 && deleteFunctionCount == 0)
         {
@@ -240,21 +240,21 @@ void * executeThreads(void *rank)
 
         if(rndVal <= mem_limit)
         {
-           // pthread_mutex_lock(&mutexList);
+            pthread_mutex_lock(&mutexList);
             member(rand()%1500+1);
-            //pthread_mutex_unlock(&mutexList);
+            pthread_mutex_unlock(&mutexList);
         }
         else if(rndVal <= insert_limit)
         {
-            //pthread_mutex_lock(&mutexList);
+            pthread_mutex_lock(&mutexList);
             insert_node(rand()%1000+1001);
-            //pthread_mutex_unlock(&mutexList);
+            pthread_mutex_unlock(&mutexList);
         }
         else if(rndVal <= del_limit)
         {
-            //pthread_mutex_lock(&mutexList);
+            pthread_mutex_lock(&mutexList);
             delete_node(rand()%1500+1);
-            //pthread_mutex_unlock(&mutexList);
+            pthread_mutex_unlock(&mutexList);
         }
 
     }
