@@ -1,7 +1,8 @@
 # depslib dependency file v1.0
-1468764805 source:/home/flash/Semester 7/Concurrent/lab_02/main.c
+1468894892 source:/home/flash/Semester 7/Concurrent/lab_02/main.c
 	<stdio.h>
 	<stdlib.h>
 	<pthread.h>
 	<stdbool.h>
+	<time.h>
 
