@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include "timer.h"
 
 static float const memberFunction_count=9900;
 static float const insertFunction_count=50;
@@ -36,11 +37,12 @@ void * executeThreads(void * rank);
 
 int main()
 {
+    double start, finish;
     pthread_t * thread;
     pthread_mutex_init(&mutexList,NULL);
     //pthread_mutex_init(&totalThreadCount,NULL);
 
-clock_t start_time=clock(),end_time;
+    GET_TIME(start);
     memberFunctionCount=memberFunction_count;
     insertFunctionCount=insertFunction_count;
     deleteFunctionCount=deleteFunction_count;
@@ -67,8 +69,8 @@ clock_t start_time=clock(),end_time;
         pthread_join(thread[i],NULL);
     }
 
-    end_time=clock();
-    printf("Thread_id : %d -> Time : %f\n",(double)(end_time-start_time)/CLOCKS_PER_SEC);
+    GET_TIME(finish);
+    printf("Time : %f\n",finish-start);
 
     free(thread);
     return 0;
