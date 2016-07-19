@@ -29,18 +29,18 @@ int delete_ratio=5;
 
 void *threadOperations();
 struct node * init();
-bool insert_node(int val);
-bool delete_node(int val);
-struct node * member(int val);
+bool insert_node(int val,int thread_id);
+bool delete_node(int val,int thread_id);
+struct node * member(int val,int thread_id);
 void * executeThreads(void * rank);
 
 int main()
 {
     pthread_t * thread;
     pthread_mutex_init(&mutexList,NULL);
-    //pthread_mutex_init(&totalThreadCount,NULL);
+    pthread_mutex_init(&mutexTotalOps,NULL);
 
-clock_t start_time=clock(),end_time;
+    clock_t start_time=clock(),end_time;
     memberFunctionCount=memberFunction_count;
     insertFunctionCount=insertFunction_count;
     deleteFunctionCount=deleteFunction_count;
@@ -68,7 +68,7 @@ clock_t start_time=clock(),end_time;
     }
 
     end_time=clock();
-    printf("Thread_id : %d -> Time : %f\n",(double)(end_time-start_time)/CLOCKS_PER_SEC);
+    printf("Time Taken to Complete Task: %f\n",(double)(end_time-start_time)/CLOCKS_PER_SEC);
 
     free(thread);
     return 0;
@@ -91,29 +91,31 @@ struct node * init()
     return head;
 }
 
-bool insert_node(int val)
+bool insert_node(int val,int thread_id)
 {
     if(insertFunctionCount <= 0)
     {
         return false;
     }
     insertFunctionCount--;
-    printf("insert\n");
+    printf("insert|Thread_id: %d\n",thread_id);
     struct node * node=(struct node *)malloc(sizeof(struct node));
     node->value=val;
     node->next=head->next;
     head->next=node;
+
+    printf("Thread_id: %d inserted Value : %d\n",thread_id,val);
     return true;
 }
 
-bool delete_node(int val)
+bool delete_node(int val,int thread_id)
 {
     if(deleteFunctionCount <= 0)
     {
         return false;
     }
     deleteFunctionCount--;
-    printf("delete\n");
+    printf("delete|Thread_id: %d\n",thread_id);
     struct node * temp;
     struct node * nodePrev;
     if(head->next == NULL)
@@ -140,12 +142,13 @@ bool delete_node(int val)
     {
         nodePrev->next=temp->next;
         free(temp);
+        printf("Thread_id: %d deleted Value : %d\n",thread_id,val);
         return true;
     }
 
 }
 
-struct node *member(int val)
+struct node *member(int val,int thread_id)
 {
 
     if(memberFunctionCount <= 0)
@@ -153,7 +156,7 @@ struct node *member(int val)
         return NULL;
     }
     memberFunctionCount--;
-    printf("member\n");
+    printf("member|Thread_id: %d\n",thread_id);
     struct node * temp;
 
     if(head->next == NULL)
@@ -163,7 +166,10 @@ struct node *member(int val)
     while(temp->next != NULL)
     {
         if(temp->value == val)
+        {
+            printf("Thread_id: %d Searched Value : %d\n",thread_id,val);
             return temp;
+        }
         else
             temp=temp->next;
     }
@@ -176,7 +182,6 @@ void * executeThreads(void *rank)
     srand(time(NULL));
     while(totalOps > 0)
     {
-    printf("Ops = %d",totalOps);
         pthread_mutex_lock(&mutexTotalOps);
         totalOps--;
         pthread_mutex_unlock(&mutexTotalOps);
@@ -244,22 +249,21 @@ void * executeThreads(void *rank)
         if(rndVal <= mem_limit)
         {
             pthread_mutex_lock(&mutexList);
-            member(rand()%1500+1);
+            member(rand()%1500+1,(int)rank);
             pthread_mutex_unlock(&mutexList);
         }
         else if(rndVal <= insert_limit)
         {
             pthread_mutex_lock(&mutexList);
-            insert_node(rand()%1000+1001);
+            insert_node(rand()%1000+1001,(int)rank);
             pthread_mutex_unlock(&mutexList);
         }
         else if(rndVal <= del_limit)
         {
             pthread_mutex_lock(&mutexList);
-            delete_node(rand()%1500+1);
+            delete_node(rand()%1500+1,(int)rank);
             pthread_mutex_unlock(&mutexList);
         }
-
     }
     return NULL;
 }
