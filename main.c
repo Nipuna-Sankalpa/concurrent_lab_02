@@ -4,11 +4,15 @@
 #include <stdbool.h>
 #include <time.h>
 #include "timer.h"
+#include <math.h>
 
 /** define number of member, insert and delete operations **/
 static float const memberFunction_count=9900;
 static float const insertFunction_count=50;
 static float const deleteFunction_count=50;
+
+static int const THREAD_COUNT = 4;
+static int const SAMPLE_SIZE = 100;
 
 /** node structure **/
 struct node
@@ -39,46 +43,69 @@ void * executeThreads(void * rank);
 
 int main()
 {
-    double start, finish;
-    pthread_t * thread;
+    int iteration = 0;
+    float runtime[SAMPLE_SIZE] ;
+    for(iteration = 0; iteration < SAMPLE_SIZE; iteration ++){
 
-    /** initialize mutex and read write lock **/
-    //pthread_mutex_init(&mutexList,NULL);
-    pthread_mutex_init(&mutexTotalOps,NULL);
-    pthread_rwlock_init(&rwlock,NULL);
+        double start, finish;
+        pthread_t * thread;
 
-    memberFunctionCount=memberFunction_count;
-    insertFunctionCount=insertFunction_count;
-    deleteFunctionCount=deleteFunction_count;
-    totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
+        /** initialize mutex and read write lock **/
+        //pthread_mutex_init(&mutexList,NULL);
+        pthread_mutex_init(&mutexTotalOps,NULL);
+        pthread_rwlock_init(&rwlock,NULL);
 
-    int i=0;                // thread ID
-    int numberOfThreads=4;  // number of threads
+        memberFunctionCount=memberFunction_count;
+        insertFunctionCount=insertFunction_count;
+        deleteFunctionCount=deleteFunction_count;
+        totalOps=memberFunction_count+insertFunction_count+deleteFunction_count;
 
-    init();
-    GET_TIME(start);        // start timer
+        int i=0;                            // thread ID
+        int numberOfThreads=THREAD_COUNT;   // number of threads
 
-    thread=malloc(numberOfThreads * sizeof(pthread_t));
+        init();
+        GET_TIME(start);                    // start timer
 
-    /** create threads **/
-    for(i=0; i<numberOfThreads; i++)
-    {
-        pthread_create(&thread[i],NULL,executeThreads,(void *) i);
+        thread=malloc(numberOfThreads * sizeof(pthread_t));
+
+        /** create threads **/
+        for(i=0; i<numberOfThreads; i++)
+        {
+            pthread_create(&thread[i],NULL,executeThreads,(void *) i);
+        }
+
+        //printf("threads created\n");
+
+        /** wait main thread until other threads are finished **/
+        for(i=0; i<numberOfThreads; i++)
+        {
+            pthread_join(thread[i],NULL);
+        }
+
+        GET_TIME(finish);                   // stop timer
+        double totalTime = finish - start;
+        printf("%d Time Taken to Complete Task: %f\n",iteration+1,totalTime);
+        runtime[iteration] = totalTime;
+
+        free(thread);
+
     }
 
-    printf("threads created\n");
-
-    /** wait main thread until other threads are finished **/
-    for(i=0; i<numberOfThreads; i++)
-    {
-        pthread_join(thread[i],NULL);
+    float average = 0;
+    float sd = 0;
+    int j = 0;
+    for(j=0; j<SAMPLE_SIZE; j++){
+        average = average + runtime[j];
     }
+    average = average/SAMPLE_SIZE;
 
-    GET_TIME(finish);       // stop timer
-    printf("Time Taken to Complete Task: %f\n",finish - start);
+    for(j=0; j<SAMPLE_SIZE; j++){
+        sd = sd + pow((runtime[j]-average),2);
+    }
+    sd = sd/SAMPLE_SIZE;
+    sd = sqrt(sd);
+    printf("Mean: %f SD: %f \n",average,sd);
 
-
-    free(thread);
     return 0;
 }
 
@@ -108,13 +135,13 @@ bool insert_node(int val,int thread_id)
         return false;
     }
     insertFunctionCount--;
-    printf("insert|Thread_id: %d\n",thread_id);
+    //printf("insert|Thread_id: %d\n",thread_id);
     struct node * node=(struct node *)malloc(sizeof(struct node));
     node->value=val;
     node->next=head->next;
     head->next=node;
 
-    printf("Thread_id: %d inserted Value : %d\n",thread_id,val);
+    //printf("Thread_id: %d inserted Value : %d\n",thread_id,val);
     return true;
 }
 
@@ -126,7 +153,7 @@ bool delete_node(int val,int thread_id)
         return false;
     }
     deleteFunctionCount--;
-    printf("delete|Thread_id: %d\n",thread_id);
+    //printf("delete|Thread_id: %d\n",thread_id);
     struct node * temp;
     struct node * nodePrev;
     if(head->next == NULL)
@@ -153,7 +180,7 @@ bool delete_node(int val,int thread_id)
     {
         nodePrev->next=temp->next;
         free(temp);
-        printf("Thread_id: %d deleted Value : %d\n",thread_id,val);
+        //printf("Thread_id: %d deleted Value : %d\n",thread_id,val);
         return true;
     }
 
@@ -168,7 +195,7 @@ struct node *member(int val,int thread_id)
         return NULL;
     }
     memberFunctionCount--;
-    printf("member|Thread_id: %d\n",thread_id);
+    //printf("member|Thread_id: %d\n",thread_id);
     struct node * temp;
 
     if(head->next == NULL)
@@ -179,7 +206,7 @@ struct node *member(int val,int thread_id)
     {
         if(temp->value == val)
         {
-            printf("Thread_id: %d Searched Value : %d\n",thread_id,val);
+            //printf("Thread_id: %d Searched Value : %d\n",thread_id,val);
             return temp;
         }
         else
@@ -193,7 +220,7 @@ void * executeThreads(void *rank)
 {
     /** define three ranges for member, delete and insert operations according to the given ratio **/
     float mem_limit=member_ratio,insert_limit=member_ratio+insert_ratio,del_limit=insert_limit+delete_ratio;
-    srand(time(NULL));
+    srand(time(NULL));      // initialize random seed
     while(totalOps > 0)
     {
         /** mutex for totalOps global variable**/
@@ -262,7 +289,7 @@ void * executeThreads(void *rank)
             }
         }
 
-        /** execute relevant operation according to the memory limit **/
+        /** execute relevant operation according to the pre defined limit ranges **/
         if(rndVal <= mem_limit)
         {
             pthread_rwlock_rdlock(&rwlock);
