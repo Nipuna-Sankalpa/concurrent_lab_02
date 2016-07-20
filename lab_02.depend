@@ -1,11 +1,12 @@
 # depslib dependency file v1.0
-1468905428 source:/home/flash/Semester 7/Concurrent/lab_02/main.c
+1469002409 source:/home/flash/Semester 7/Concurrent/lab_02/main.c
 	<stdio.h>
 	<stdlib.h>
 	<pthread.h>
 	<stdbool.h>
 	<time.h>
 	"timer.h"
+	<math.h>
 
 1468905428 /home/flash/Semester 7/Concurrent/lab_02/timer.h
 	<sys/time.h>

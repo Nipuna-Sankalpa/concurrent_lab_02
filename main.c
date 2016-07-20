@@ -11,7 +11,7 @@ static float const memberFunction_count=9900;
 static float const insertFunction_count=50;
 static float const deleteFunction_count=50;
 
-static int const THREAD_COUNT = 4;
+static int const THREAD_COUNT = 2;
 static int const SAMPLE_SIZE = 100;
 
 /** node structure **/
@@ -45,7 +45,8 @@ int main()
 {
     int iteration = 0;
     float runtime[SAMPLE_SIZE] ;
-    for(iteration = 0; iteration < SAMPLE_SIZE; iteration ++){
+    for(iteration = 0; iteration < SAMPLE_SIZE; iteration ++)
+    {
 
         double start, finish;
         pthread_t * thread;
@@ -94,12 +95,14 @@ int main()
     float average = 0;
     float sd = 0;
     int j = 0;
-    for(j=0; j<SAMPLE_SIZE; j++){
+    for(j=0; j<SAMPLE_SIZE; j++)
+    {
         average = average + runtime[j];
     }
     average = average/SAMPLE_SIZE;
 
-    for(j=0; j<SAMPLE_SIZE; j++){
+    for(j=0; j<SAMPLE_SIZE; j++)
+    {
         sd = sd + pow((runtime[j]-average),2);
     }
     sd = sd/SAMPLE_SIZE;
@@ -232,6 +235,57 @@ void * executeThreads(void *rank)
         }
 
         int rndVal=rand()%3+1;   // generate random value from 1 to 1000
+
+        /** adjust pre defined ranges by considering function count **/
+        if(memberFunctionCount == 0)
+        {
+
+            if (insertFunctionCount == 0)
+            {
+                rndVal=3;
+            }
+            else if(deleteFunctionCount == 0)
+            {
+                rndVal=2;
+            }
+            else
+            {
+                rndVal=rand()%2+2;
+            }
+
+        }
+        else if (insertFunctionCount == 0)
+        {
+            if (memberFunctionCount == 0)
+            {
+                rndVal=3;
+            }
+            else if(deleteFunctionCount == 0)
+            {
+                rndVal=1;
+            }
+            else
+            {
+                int array[]= {1,3};
+                rndVal=array[rand()%2];
+            }
+
+        }
+        else if(deleteFunctionCount == 0)
+        {
+            if (memberFunctionCount == 0)
+            {
+                rndVal=2;
+            }
+            else if(insertFunctionCount == 0)
+            {
+                rndVal=1;
+            }
+            else
+            {
+                rndVal=rand()%2+1;
+            }
+        }
 
         /** execute relevant operation according to the pre defined limit ranges **/
         if(rndVal == 1)
