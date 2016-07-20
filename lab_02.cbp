@@ -35,6 +35,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="../Pthreads, OpenMP, &amp; MPI Code/PThread/timer.h">
+			<Option target="Release" />
+		</Unit>
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
